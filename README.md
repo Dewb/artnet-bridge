@@ -1,5 +1,9 @@
 # artnet-bridge
 
+Translate Art-Net packets from popular lighting control software into KiNET packets destined for multiple Philips Color Kinetics power/data supplies.
+
+Building from source requires the Rust toolchain. https://www.rust-lang.org/tools/install
+
 ## Build and run with cargo
 
 ```bash
