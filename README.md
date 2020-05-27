@@ -59,3 +59,4 @@ OPTIONS:
 * Support sACN as an input protocol alongside ArtNet
 * Support KiNET discovery and readdressing protocols, capture all known KiNET implementation details
 * Eventually support building for embedded platforms without heap allocation (e.g. compile with `#![no_std]`).
+* Implement a web-based live configuration panel
