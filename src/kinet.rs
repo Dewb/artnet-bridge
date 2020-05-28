@@ -1,5 +1,7 @@
 use serde::{Serialize, Serializer};
 use serde::ser::SerializeTuple;
+use anyhow::Error;
+
 extern crate bincode;
 
 #[derive(Serialize)]
@@ -60,7 +62,7 @@ impl Default for Output {
 }
 
 impl Output {
-    pub fn serialize(self) -> Vec<u8> {
-        return bincode::config().big_endian().serialize(&self).unwrap();
+    pub fn serialize(self) -> Result<Vec<u8>, Error> {
+        return Ok(bincode::config().big_endian().serialize(&self)?);
     }
 }

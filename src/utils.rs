@@ -1,6 +1,7 @@
-use artnet_protocol::{PollReply, ARTNET_PROTOCOL_VERSION};
+use artnet_protocol::{ArtCommand, PollReply, ARTNET_PROTOCOL_VERSION};
 use std::convert::AsMut;
-use std::net::Ipv4Addr;
+use std::net::{SocketAddr, UdpSocket, Ipv4Addr};
+use anyhow::Error;
 
 // Helper function to clone a slice into an array reference
 pub fn clone_into_array<A, T>(slice: &[T]) -> A
@@ -10,6 +11,12 @@ pub fn clone_into_array<A, T>(slice: &[T]) -> A
     let mut a = Default::default();
     <A as AsMut<[T]>>::as_mut(&mut a).clone_from_slice(slice);
     a
+}
+
+pub fn send_artnet_command(command: ArtCommand, socket: &UdpSocket, dest: &SocketAddr) -> Result<(), Error> {
+    let bytes = command.into_buffer()?;
+    socket.send_to(&bytes, dest)?;
+    Ok(())
 }
 
 // Fake an implementation of the Default trait for PollReply
