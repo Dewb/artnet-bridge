@@ -1,5 +1,9 @@
 # artnet-bridge
 
+Translate Art-Net packets from popular lighting control software into KiNET packets destined for multiple Philips Color Kinetics power/data supplies.
+
+Building from source requires the Rust toolchain. https://www.rust-lang.org/tools/install
+
 ## Build and run with cargo
 
 ```bash
@@ -49,13 +53,14 @@ OPTIONS:
 ## Project Initial Goals
 
 * Provide a way to integrate CK lighting hardware with popular software control environments
-* Create a virtual ArtNet destination that bridges to KiNET protocol devices
+* Create a virtual Art-Net destination that bridges to KiNET protocol devices
 * Run on PC/Mac/Linux desktops and Raspberry Pis
 * Maximize performance & reliability
 
 ## Potential Future Goals
 
 * Support OpenPixelControl as an output protocol alongside KiNET
-* Support sACN as an input protocol alongside ArtNet
+* Support sACN as an input protocol alongside Art-Net
 * Support KiNET discovery and readdressing protocols, capture all known KiNET implementation details
 * Eventually support building for embedded platforms without heap allocation (e.g. compile with `#![no_std]`).
+* Implement a web-based live configuration panel
