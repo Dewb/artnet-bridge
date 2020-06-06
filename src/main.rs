@@ -2,41 +2,33 @@ use structopt::StructOpt;
 use std::net::{Ipv4Addr, UdpSocket, SocketAddr, ToSocketAddrs};
 use artnet_protocol::{ArtCommand, PollReply};
 use std::str::FromStr;
-use clap_verbosity_flag::Verbosity;
-use log::{error, info, debug, trace, Level};
+
+use log::{error, info, debug, trace};
 use anyhow::Error;
 
 extern crate pretty_env_logger;
+extern crate serde_json;
 
+mod config;
 mod kinet;
 mod utils;
 
-#[derive(Debug, StructOpt)]
-/// Map Art-Net universes to KiNET PDS endpoints
-struct Cli {
-    /// The network address to listen on 
-    #[structopt(short = "l", long = "listen")]
-    artnet_address: String,
-    /// The network address to send KiNET from   
-    #[structopt(short = "k", long = "kinet")]
-    kinet_address: String,
-    /// The KiNET PDS addresses to send to
-    #[structopt(short = "p", long = "pds", required(true))]
-    pds_addresses: Vec<String>,
-    // Output verbosity control
-    #[structopt(flatten)]
-    verbose: Verbosity,
-}
 
 fn main() -> Result<(), Error> {
 
-    let mut args = Cli::from_args();
-    args.verbose.set_default(Some(Level::Warn));
-    
+    // Load configuration from command line
+    let args = config::Configuration::from_args();
+
     pretty_env_logger::formatted_timed_builder()
-        .filter(None, args.verbose.log_level().unwrap().to_level_filter())
+        .filter(None, args.get_log_level().unwrap().to_level_filter())
         .init();
     
+    if !args.config_file.is_empty() {
+        let file_args = config::Configuration::read_from_file(args.config_file).unwrap();
+        
+
+    }
+
     let mut short_name: [u8; 18] = [0; 18];
     let mut long_name: [u8; 64] = [0; 64];
 
