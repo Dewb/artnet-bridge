@@ -17,17 +17,19 @@ mod utils;
 fn main() -> Result<(), Error> {
 
     // Load configuration from command line
-    let args = config::Configuration::from_args();
+    let cli_args = config::UserConfiguration::from_args();
+
+    let mut file_args = config::UserConfiguration::default();
+    if cli_args.config_file.is_some() {
+        let file_path = cli_args.config_file.clone().unwrap();
+        file_args = config::UserConfiguration::from_file(file_path)?;
+    }
+
+    let cfg = config::Configuration::from_user_configs(cli_args, file_args)?;
 
     pretty_env_logger::formatted_timed_builder()
-        .filter(None, args.get_log_level().unwrap().to_level_filter())
+        .filter(None, cfg.get_log_level().unwrap().to_level_filter())
         .init();
-    
-    if !args.config_file.is_empty() {
-        let file_args = config::Configuration::read_from_file(args.config_file).unwrap();
-        
-
-    }
 
     let mut short_name: [u8; 18] = [0; 18];
     let mut long_name: [u8; 64] = [0; 64];
@@ -37,19 +39,19 @@ fn main() -> Result<(), Error> {
     short_name.copy_from_slice(&default_short_name.as_bytes()[..18]);
     long_name[..26].copy_from_slice(&default_long_name.as_bytes()[..]);
 
-    info!("Listening for Art-Net packets on {}", args.artnet_address);
-    info!("Transmitting KiNET on {}", args.kinet_address);
+    info!("Listening for Art-Net packets on {}", cfg.artnet_address);
+    info!("Transmitting KiNET on {}", cfg.kinet_address);
     info!("Mapping universes to the following addresses:");
-    info!("{:?}", args.pds_addresses);
+    info!("{:?}", cfg.pds_addresses);
     
     let artnet_socket = 
-        UdpSocket::bind((&args.artnet_address[..], 6454))
+        UdpSocket::bind((&cfg.artnet_address[..], 6454))
         .expect("Could not bind to Art-Net address.");
     let kinet_socket = 
-        UdpSocket::bind((&args.kinet_address[..], 6038))
+        UdpSocket::bind((&cfg.kinet_address[..], 6038))
         .expect("Could not bind to KiNET address.");
 
-    let pds_addrs: Vec<SocketAddr> = args.pds_addresses.iter().map(|addr_string| {
+    let pds_addrs: Vec<SocketAddr> = cfg.pds_addresses.iter().map(|addr_string| {
        (&addr_string[..], 6038).to_socket_addrs().expect("Could not parse PDS address.").next().unwrap()
     }).collect();
     
@@ -65,9 +67,9 @@ fn main() -> Result<(), Error> {
                 let command = ArtCommand::PollReply(
                     Box::new( 
                         PollReply {
-                            address: Ipv4Addr::from_str(&args.artnet_address)?,
+                            address: Ipv4Addr::from_str(&cfg.artnet_address)?,
                             port: 6454,
-                            num_ports: utils::clone_into_array(&args.pds_addresses.len().to_le_bytes()[..2]),
+                            num_ports: utils::clone_into_array(&cfg.pds_addresses.len().to_le_bytes()[..2]),
                             short_name: short_name,
                             long_name: long_name,
                             ..utils::default_poll_reply()

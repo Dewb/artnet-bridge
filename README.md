@@ -8,7 +8,7 @@ Building from source requires the Rust toolchain. https://www.rust-lang.org/tool
 
 ```bash
 $ cargo run -- -l 192.168.1.1 -k 10.0.0.1 -p 10.32.152.122 -p 10.32.152.123
- 2020-05-27T06:24:00.318Z INFO  artnet_bridge > Listening for Art-Net packets on 192.168.1.173
+ 2020-05-27T06:24:00.318Z INFO  artnet_bridge > Listening for Art-Net packets on 192.168.1.1
  2020-05-27T06:24:00.320Z INFO  artnet_bridge > Transmitting KiNET on 10.0.0.1
  2020-05-27T06:24:00.345Z INFO  artnet_bridge > Mapping universes to the following addresses:
  2020-05-27T06:24:00.346Z INFO  artnet_bridge > ["10.32.152.122", "10.32.152.123"]
@@ -21,34 +21,39 @@ artnet-bridge 0.1.0
 Map Art-Net universes to KiNET PDS endpoints
 
 USAGE:
-    artnet-bridge.exe [FLAGS] --listen <artnet-address> --kinet <kinet-address> --pds <pds-addresses>...
+    artnet-bridge.exe [FLAGS] [OPTIONS]
 
 FLAGS:
-    -h, --help
-            Prints help information
-
-    -q, --quiet
-            Pass many times for less log output
-
-    -V, --version
-            Prints version information
-
-    -v, --verbose
-            Pass many times for more log output
-
-            By default, it'll only report errors. Passing `-v` one time also prints warnings, `-vv` enables info
-            logging, `-vvv` debug, and `-vvvv` trace.
+    -h, --help       Prints help information
+    -q, --quiet      Make output less verbose. Add -q to only show warnings and errors, -qq to only show errors, and
+                     -qqq to silence output completely
+    -V, --version    Prints version information
+    -v, --verbose    Make output more verbose. Add -v for debugging info, add -vv for even more detailed message tracing
 
 OPTIONS:
-    -l, --listen <artnet-address>
-            The network address to listen on
-
-    -k, --kinet <kinet-address>
-            The network address to send KiNET from
-
-    -p, --pds <pds-addresses>...
-            The KiNET PDS addresses to send to
+    -l, --listen <artnet-address>    The network address to listen on
+    -f, --file <config-file>         Path to a file containing configuration options. All command-line options can be
+                                     specified in the config file; command-line options will override options in file
+                                     where there's a conflict
+    -k, --kinet <kinet-address>      The network address to send KiNET from
+    -p, --pds <pds-addresses>...     The KiNET PDS addresses to send to
 ```
+
+## Configuration files
+
+Options can be specified in a configuration file in addition to the command line. If an argument is provided both in 
+the configuration file and on the command line, the command line value will be used, except for PDS addresses, which
+will be combined from both sources.
+
+```bash
+$ cargo run -- -f examples/config.json
+    Finished dev [unoptimized + debuginfo] target(s) in 0.12s
+     Running `target\debug\artnet-bridge.exe -f examples/config.json`
+ 2020-06-06T23:05:58.119Z INFO  artnet_bridge > Listening for Art-Net packets on 192.168.1.1
+ 2020-06-06T23:05:58.126Z INFO  artnet_bridge > Transmitting KiNET on 10.0.0.1
+ 2020-06-06T23:05:58.126Z INFO  artnet_bridge > Mapping universes to the following addresses:
+ 2020-06-06T23:05:58.127Z INFO  artnet_bridge > ["10.32.152.122", "10.32.152.123"]
+ ```
 
 ## Project Initial Goals
 
