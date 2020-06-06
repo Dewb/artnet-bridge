@@ -38,9 +38,10 @@ pub enum KinetCommand {
     DiscoverFixturesSerialRequest, // 0x102
     DiscoverFixturesChannelRequest, // 0x302
     OutputPDS480, // 0x801
-    DiscoverSuppliesReply, // ???
+    DiscoverSuppliesReply, // 0x200
     DiscoverFixturesSerialReply, // ???
     DiscoverFixturesChannelReply, // ???
+    0xA00 // ???
 }
 */
 
