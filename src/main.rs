@@ -1,5 +1,5 @@
 use structopt::StructOpt;
-use std::net::{Ipv4Addr, UdpSocket, SocketAddr, ToSocketAddrs};
+use std::net::{Ipv4Addr, UdpSocket};
 use artnet_protocol::{ArtCommand, PollReply};
 use std::str::FromStr;
 
@@ -12,7 +12,6 @@ extern crate serde_json;
 mod config;
 mod kinet;
 mod utils;
-
 
 fn main() -> Result<(), Error> {
 
@@ -39,21 +38,19 @@ fn main() -> Result<(), Error> {
     short_name.copy_from_slice(&default_short_name.as_bytes()[..18]);
     long_name[..26].copy_from_slice(&default_long_name.as_bytes()[..]);
 
-    info!("Listening for Art-Net packets on {}", cfg.artnet_address);
-    info!("Transmitting KiNET on {}", cfg.kinet_address);
-    info!("Mapping universes to the following addresses:");
-    info!("{:?}", cfg.pds_addresses);
-    
+    info!("Listening for Art-Net packets on {}", cfg.artnet_receive_ip);
+    info!("Transmitting KiNET on {}", cfg.kinet_send_ip);
+    info!("Mapping Art-Net to the following KiNET destinations:");
+    for mapping in cfg.kinet_destinations.values() {
+        info!("{:?}", mapping);
+    }
+        
     let artnet_socket = 
-        UdpSocket::bind((&cfg.artnet_address[..], 6454))
+        UdpSocket::bind((&cfg.artnet_receive_ip[..], 6454))
         .expect("Could not bind to Art-Net address.");
     let kinet_socket = 
-        UdpSocket::bind((&cfg.kinet_address[..], 6038))
+        UdpSocket::bind((&cfg.kinet_send_ip[..], 6038))
         .expect("Could not bind to KiNET address.");
-
-    let pds_addrs: Vec<SocketAddr> = cfg.pds_addresses.iter().map(|addr_string| {
-       (&addr_string[..], 6038).to_socket_addrs().expect("Could not parse PDS address.").next().unwrap()
-    }).collect();
     
     loop {
         let mut buffer = [0u8; 1024];
@@ -67,9 +64,8 @@ fn main() -> Result<(), Error> {
                 let command = ArtCommand::PollReply(
                     Box::new( 
                         PollReply {
-                            address: Ipv4Addr::from_str(&cfg.artnet_address)?,
+                            address: Ipv4Addr::from_str(&cfg.artnet_receive_ip)?,
                             port: 6454,
-                            num_ports: utils::clone_into_array(&cfg.pds_addresses.len().to_le_bytes()[..2]),
                             short_name: short_name,
                             long_name: long_name,
                             ..utils::default_poll_reply()
@@ -98,17 +94,24 @@ fn main() -> Result<(), Error> {
                     artnet_network, artnet_subnet, artnet_universe, length);
                 trace!("{:?}", output);
 
-                let mut kinet_output = kinet::Output::default();
-                kinet_output.data[..length as usize].copy_from_slice(&output.data[..length as usize]);
-                match kinet_output.serialize() {
-                    Err(e) => { error!("{:?}", e); },
-                    Ok(bytes) => {
-                        debug!("Sending KiNET output packet to {:?}", pds_addrs[0]);
-                        trace!("{:?}", bytes);
-                        
-                        match kinet_socket.send_to(&bytes, &pds_addrs[0]) {
+                match cfg.kinet_destinations.get(&output.subnet) {
+                    None => {
+                        debug!("No KiNET destination specified for this Art-Net output");
+                    },
+                    Some(destination) => {
+                        let mut kinet_output = kinet::Output::default();
+                        kinet_output.data[..length as usize].copy_from_slice(&output.data[..length as usize]);
+                        match kinet_output.serialize() {
                             Err(e) => { error!("{:?}", e); },
-                            Ok(_count) => {}
+                            Ok(bytes) => {
+                                debug!("Sending KiNET output packet to {:?} {:?}", destination.kinet_address, destination.kinet_universe);
+                                trace!("{:?}", bytes);
+                                
+                                match kinet_socket.send_to(&bytes, &destination.kinet_socket_addr) {
+                                    Err(e) => { error!("{:?}", e); },
+                                    Ok(_count) => {}
+                                }
+                            }
                         }
                     }
                 }

@@ -7,11 +7,12 @@ Building from source requires the Rust toolchain. https://www.rust-lang.org/tool
 ## Build and run with cargo
 
 ```bash
-$ cargo run -- -l 192.168.1.1 -k 10.0.0.1 -p 10.32.152.122 -p 10.32.152.123
- 2020-05-27T06:24:00.318Z INFO  artnet_bridge > Listening for Art-Net packets on 192.168.1.1
- 2020-05-27T06:24:00.320Z INFO  artnet_bridge > Transmitting KiNET on 10.0.0.1
- 2020-05-27T06:24:00.345Z INFO  artnet_bridge > Mapping universes to the following addresses:
- 2020-05-27T06:24:00.346Z INFO  artnet_bridge > ["10.32.152.122", "10.32.152.123"]
+$ cargo run -- -a 192.168.1.1 -k 10.0.0.1 -m 1:10.32.152.122 -m 1:0:10.32.152.122:1
+ 2020-06-07T18:53:33.773Z INFO  artnet_bridge > Listening for Art-Net packets on 192.168.1.1
+ 2020-06-07T18:53:33.773Z INFO  artnet_bridge > Transmitting KiNET on 10.0.0.1
+ 2020-06-07T18:53:33.774Z INFO  artnet_bridge > Mapping Art-Net to the following KiNET destinations:
+ 2020-06-07T18:53:33.774Z INFO  artnet_bridge > KinetDestination { artnet_network: 0, artnet_subnet: 0, artnet_universe: 1, kinet_address: "10.32.152.122", kinet_socket_addr: V4(10.32.152.122:6038), kinet_universe: 0 }
+ 2020-06-07T18:53:33.774Z INFO  artnet_bridge > KinetDestination { artnet_network: 0, artnet_subnet: 1, artnet_universe: 0, kinet_address: "10.32.152.122", kinet_socket_addr: V4(10.32.152.122:6038), kinet_universe: 1 }
 ```
 
 ## Full options
@@ -31,12 +32,20 @@ FLAGS:
     -v, --verbose    Make output more verbose. Add -v for debugging info, add -vv for even more detailed message tracing
 
 OPTIONS:
-    -l, --listen <artnet-address>    The network address to listen on
+    -a <artnet-receive-ip>           The IPv4 network address where Art-Net packets will be received
+    -k <kinet-send-ip>               The IPv4 network address that KiNET packets should be sent from
+    -m, --mapping <map-string>...    Map a single Art-Net universe data to a KiNET destination. Map-string should
+                                     consist of an Art-Net source universe and a KiNET destination IPv4 address, with
+                                     optional output universe, all separated by colons. Art-Net source universes can be
+                                     specified with just a universe, or a network, subnet, and universe.
+                                     1:0:15:10.0.0.1:3 would send listen for Art-Net output for network 1, subnet 0,
+                                     universe 15, and send it to the KiNET PDS at 10.0.0.1 for output on
+                                     universe/channel 3. If any network/subnet/universe values are not provided, they
+                                     will be assumed to be 0, so the following are all valid: -m 10.0.0.4 -m
+                                     3:192.168.10.100 -m 1:4:13:10.0.1.4 -m 192.168.0.15:10 -m 1:1:10.0.0.2:2
     -f, --file <config-file>         Path to a file containing configuration options. All command-line options can be
                                      specified in the config file; command-line options will override options in file
                                      where there's a conflict
-    -k, --kinet <kinet-address>      The network address to send KiNET from
-    -p, --pds <pds-addresses>...     The KiNET PDS addresses to send to
 ```
 
 ## Configuration files
@@ -45,14 +54,26 @@ Options can be specified in a configuration file in addition to the command line
 the configuration file and on the command line, the command line value will be used, except for PDS addresses, which
 will be combined from both sources.
 
+*examples/config.json*
+
+```json
+{
+    "artnet_receive_ip": "192.168.1.1",
+    "kinet_send_ip": "10.0.0.1",
+    "mappings": [
+        "0:10.32.152.122:0",
+        "1:10.32.152.123:0"
+    ]
+}
+```
+
 ```bash
 $ cargo run -- -f examples/config.json
-    Finished dev [unoptimized + debuginfo] target(s) in 0.12s
-     Running `target\debug\artnet-bridge.exe -f examples/config.json`
- 2020-06-06T23:05:58.119Z INFO  artnet_bridge > Listening for Art-Net packets on 192.168.1.1
- 2020-06-06T23:05:58.126Z INFO  artnet_bridge > Transmitting KiNET on 10.0.0.1
- 2020-06-06T23:05:58.126Z INFO  artnet_bridge > Mapping universes to the following addresses:
- 2020-06-06T23:05:58.127Z INFO  artnet_bridge > ["10.32.152.122", "10.32.152.123"]
+ 2020-06-07T19:03:22.651Z INFO  artnet_bridge > Listening for Art-Net packets on 192.168.1.1
+ 2020-06-07T19:03:22.656Z INFO  artnet_bridge > Transmitting KiNET on 10.0.0.1
+ 2020-06-07T19:03:22.673Z INFO  artnet_bridge > Mapping Art-Net to the following KiNET destinations:
+ 2020-06-07T19:03:22.673Z INFO  artnet_bridge > KinetDestination { artnet_network: 0, artnet_subnet: 0, artnet_universe: 0, kinet_address: "10.32.152.123", kinet_socket_addr: V4(10.32.152.123:6038), kinet_universe: 0 }
+ 2020-06-07T19:03:22.691Z INFO  artnet_bridge > KinetDestination { artnet_network: 0, artnet_subnet: 0, artnet_universe: 1, kinet_address: "10.32.152.122", kinet_socket_addr: V4(10.32.152.122:6038), kinet_universe: 0 }
  ```
 
 ## Project Initial Goals
