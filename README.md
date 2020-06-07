@@ -7,13 +7,12 @@ Building from source requires the Rust toolchain. https://www.rust-lang.org/tool
 ## Build and run with cargo
 
 ```bash
-$ cargo run -- -a 192.168.1.1 -k 10.0.0.1 -m 1:10.32.152.122 -m 1:0:10.32.152.122:1
+$ cargo run -- -a 192.168.1.1 -k 10.0.0.1 -m 1:0:1:10.32.152.122:0
  2020-06-07T18:53:33.773Z INFO  artnet_bridge > Listening for Art-Net packets on 192.168.1.1
  2020-06-07T18:53:33.773Z INFO  artnet_bridge > Transmitting KiNET on 10.0.0.1
  2020-06-07T18:53:33.774Z INFO  artnet_bridge > Mapping Art-Net to the following KiNET destinations:
- 2020-06-07T18:53:33.774Z INFO  artnet_bridge > KinetDestination { artnet_network: 0, artnet_subnet: 0, artnet_universe: 1, kinet_address: "10.32.152.122", kinet_socket_addr: V4(10.32.152.122:6038), kinet_universe: 0 }
- 2020-06-07T18:53:33.774Z INFO  artnet_bridge > KinetDestination { artnet_network: 0, artnet_subnet: 1, artnet_universe: 0, kinet_address: "10.32.152.122", kinet_socket_addr: V4(10.32.152.122:6038), kinet_universe: 1 }
-```
+ 2020-06-07T18:53:33.774Z INFO  artnet_bridge > KinetDestination { artnet_network: 1, artnet_subnet: 0, artnet_universe: 1, kinet_address: "10.32.152.122", kinet_socket_addr: V4(10.32.152.122:6038), kinet_universe: 0 }
+ ``
 
 ## Full options
 
