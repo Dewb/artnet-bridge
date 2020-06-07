@@ -84,11 +84,22 @@ fn main() -> Result<(), Error> {
             ArtCommand::PollReply(_reply) => {
             },
             ArtCommand::Output(output) => {
-                debug!("Received Art-Net output command for subnet {:?} of length {:?}", output.subnet, output.length);
+                // artnet_protocol 0.2.0 seems to parse the length field with the wrong endianness, reverse it
+                let length = match output.length.swap_bytes() {
+                    0..=512 => output.length.swap_bytes(),
+                    _ => 512
+                };
+
+                let artnet_universe = (output.subnet & 0x0F) as u8;
+                let artnet_subnet   = ((output.subnet & 0xF0) >> 4) as u8;
+                let artnet_network  = ((output.subnet & 0x7F00) >> 8) as u8;
+
+                debug!("Received Art-Net output command for net/subnet/universe {:?}:{:?}:{:?} with length {:?}", 
+                    artnet_network, artnet_subnet, artnet_universe, length);
                 trace!("{:?}", output);
 
                 let mut kinet_output = kinet::Output::default();
-                kinet_output.data.copy_from_slice(&output.data[..512]);
+                kinet_output.data[..length as usize].copy_from_slice(&output.data[..length as usize]);
                 match kinet_output.serialize() {
                     Err(e) => { error!("{:?}", e); },
                     Ok(bytes) => {
