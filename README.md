@@ -76,6 +76,11 @@ $ cargo run -- -f examples/config.json
  2020-06-07T19:03:22.673Z INFO  artnet_bridge > KinetDestination { artnet_network: 0, artnet_subnet: 0, artnet_universe: 0, kinet_address: "10.32.152.123", kinet_socket_addr: V4(10.32.152.123:6038), kinet_universe: 0 }
  2020-06-07T19:03:22.691Z INFO  artnet_bridge > KinetDestination { artnet_network: 0, artnet_subnet: 0, artnet_universe: 1, kinet_address: "10.32.152.122", kinet_socket_addr: V4(10.32.152.122:6038), kinet_universe: 0 }
  ```
+## Running tests
+
+```text
+$ cargo test
+```
 
 ## Project Initial Goals
 
