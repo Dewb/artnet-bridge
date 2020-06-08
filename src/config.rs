@@ -215,7 +215,7 @@ fn mappings_to_destinations(mappings: Vec<String>) -> Result<HashMap<u16, KinetD
         };
 
         if tokens.len() != 0 {
-            return Err(anyhow!("Too many values provided in mapping {}", item));
+            return Err(anyhow!("Too many values provided in mapping {}", dest));
         }
         
         let combined_address = 
