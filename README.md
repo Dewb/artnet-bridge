@@ -11,7 +11,7 @@ $ cargo run -- -a 192.168.1.1 -k 10.0.0.1 -m 1:0:1:10.32.152.122:0
  2020-06-07T18:53:33.773Z INFO  artnet_bridge > Listening for Art-Net packets on 192.168.1.1
  2020-06-07T18:53:33.773Z INFO  artnet_bridge > Transmitting KiNET on 10.0.0.1
  2020-06-07T18:53:33.774Z INFO  artnet_bridge > Mapping Art-Net to the following KiNET destinations:
- 2020-06-07T18:53:33.774Z INFO  artnet_bridge > KinetDestination { artnet_network: 1, artnet_subnet: 0, artnet_universe: 1, kinet_address: "10.32.152.122", kinet_socket_addr: V4(10.32.152.122:6038), kinet_universe: 0 }
+ 2020-06-07T18:53:33.774Z INFO  artnet_bridge > KinetDestination { artnet_network: 1, artnet_subnet: 0, artnet_universe: 1, kinet_address: "10.32.152.122", kinet_socket_addr: V4(10.32.152.122:6038), kinet_port: 0 }
  ```
 
 ## Full options
@@ -73,8 +73,8 @@ $ cargo run -- -f examples/config.json
  2020-06-07T19:03:22.651Z INFO  artnet_bridge > Listening for Art-Net packets on 192.168.1.1
  2020-06-07T19:03:22.656Z INFO  artnet_bridge > Transmitting KiNET on 10.0.0.1
  2020-06-07T19:03:22.673Z INFO  artnet_bridge > Mapping Art-Net to the following KiNET destinations:
- 2020-06-07T19:03:22.673Z INFO  artnet_bridge > KinetDestination { artnet_network: 0, artnet_subnet: 0, artnet_universe: 0, kinet_address: "10.32.152.123", kinet_socket_addr: V4(10.32.152.123:6038), kinet_universe: 0 }
- 2020-06-07T19:03:22.691Z INFO  artnet_bridge > KinetDestination { artnet_network: 0, artnet_subnet: 0, artnet_universe: 1, kinet_address: "10.32.152.122", kinet_socket_addr: V4(10.32.152.122:6038), kinet_universe: 0 }
+ 2020-06-07T19:03:22.673Z INFO  artnet_bridge > KinetDestination { artnet_network: 0, artnet_subnet: 0, artnet_universe: 0, kinet_address: "10.32.152.123", kinet_socket_addr: V4(10.32.152.123:6038), kinet_port: 0 }
+ 2020-06-07T19:03:22.691Z INFO  artnet_bridge > KinetDestination { artnet_network: 0, artnet_subnet: 0, artnet_universe: 1, kinet_address: "10.32.152.122", kinet_socket_addr: V4(10.32.152.122:6038), kinet_port: 0 }
  ```
 ## Running tests
 
@@ -89,10 +89,14 @@ $ cargo test
 * Run on PC/Mac/Linux desktops and Raspberry Pis
 * Maximize performance & reliability
 
-## Potential Future Goals
+## Medium-Term Goals
 
-* Support OpenPixelControl as an output protocol alongside KiNET
-* Support sACN as an input protocol alongside Art-Net
-* Support KiNET discovery and readdressing protocols, capture all known KiNET implementation details, spin out a kinet_protocol crate
-* Eventually support building for embedded platforms without heap allocation (e.g. compile with `#![no_std]`).
-* Implement a web-based live configuration panel
+* Implement KiNET discovery and readdressing protocols, spin out a kinet_protocol crate
+* Support embedded platforms without heap allocation (e.g. compile with `#![no_std]`).
+
+## Potential Long-Term Goals
+
+* Implement a web-based live configuration panel?
+* Support OpenPixelControl as an output protocol alongside KiNET?
+* Support sACN as an input protocol alongside Art-Net?
+
