@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs};
 use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct KinetDestination {
     pub artnet_network: u16,
     pub artnet_subnet: u8,
@@ -36,11 +36,11 @@ pub struct UserConfiguration {
     /// The IPv4 network address that KiNET packets should be sent from   
     #[structopt(short = "k", display_order = 2)]
     pub kinet_send_ip: Option<String>,
-    /// Map a single Art-Net universe data to a KiNET destination. Map-string should consist of an Art-Net source universe and 
+    /// Map a single Art-Net universe data to a KiNET destination. Each map-string contains an Art-Net source universe and
     /// a KiNET destination IPv4 address, with optional KiNET output port, all separated by colons.
-    /// Art-Net source universes can be specified with just a universe, or a network, subnet, and universe.
-    /// 1:0:15:10.0.0.1:3 would send listen for Art-Net output for network 1, subnet 0, universe 15,
-    /// and send it to the KiNET PDS at 10.0.0.1 for output on KiNET port 3.
+    /// Art-Net source universes can be specified as just a single universe value, or as a network, subnet, and universe.
+    /// 1:0:15:10.0.0.1:3 would listen for Art-Net output commands destined for network 1, subnet 0, universe 15,
+    /// and resend that output data to the KiNET PDS at 10.0.0.1, for output on KiNET port 3.
     /// Specifying no port, or 0, will send a KiNET v1 message; specifying port 1-16 will send a KiNET v2 PORTOUT message.
     /// If any network/subnet/universe values are not provided, they will be assumed to be 0, so the following are all valid:
     /// -m 10.0.0.4 -m 3:192.168.10.100 -m 1:4:13:10.0.1.4 -m 192.168.0.15:10 -m 1:1:10.0.0.2:2
@@ -213,11 +213,15 @@ fn mappings_to_destinations(mappings: Vec<String>) -> Result<HashMap<u16, KinetD
             },
             None => 0,
         };
+
+        if tokens.len() != 0 {
+            return Err(anyhow!("Too many values provided in mapping {}", item));
+        }
         
         let combined_address = 
             (artnet_universe & 0x0F) as u16 + 
-            ((artnet_subnet & 0xF0) << 4) as u16 +
-            ((artnet_network & 0x7F00) << 8);
+            ((artnet_subnet & 0x0F) << 4) as u16 +
+            ((artnet_network & 0x7F) << 8);
 
         destination_map.insert(combined_address, KinetDestination {
             artnet_network,
@@ -230,4 +234,118 @@ fn mappings_to_destinations(mappings: Vec<String>) -> Result<HashMap<u16, KinetD
     }
 
     return Ok(destination_map);
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::net::IpAddr;
+
+    #[test]
+    fn test_parse_mappings_basic() {
+
+        let good_cases = vec!(
+            (
+                "10.0.0.1",
+                0x0,
+                KinetDestination {
+                    artnet_network: 0, artnet_subnet: 0, artnet_universe: 0, kinet_port: 0,
+                    kinet_address: "10.0.0.1".to_string(),
+                    kinet_socket_addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1)), 6038)
+                },
+            ),
+            (
+                "10.0.0.1:16",
+                0x0,
+                KinetDestination {
+                    artnet_network: 0, artnet_subnet: 0, artnet_universe: 0, kinet_port: 16,
+                    kinet_address: "10.0.0.1".to_string(),
+                    kinet_socket_addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1)), 6038)
+                },
+            ),
+            (
+                "2:1:6:192.168.0.1:4",
+                0x216,
+                KinetDestination {
+                    artnet_network: 2, artnet_subnet: 1, artnet_universe: 6, kinet_port: 4,
+                    kinet_address: "192.168.0.1".to_string(),
+                    kinet_socket_addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(192, 168, 0, 1)), 6038)
+                },
+            ),
+            (
+                "3:1:6:192.168.0.1",
+                0x316,
+                KinetDestination {
+                    artnet_network: 3, artnet_subnet: 1, artnet_universe: 6, kinet_port: 0,
+                    kinet_address: "192.168.0.1".to_string(),
+                    kinet_socket_addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(192, 168, 0, 1)), 6038)
+                },
+            ),
+            (
+                "1:0:192.168.1.122:3",
+                0x010,
+                KinetDestination {
+                    artnet_network: 0, artnet_subnet: 1, artnet_universe: 0, kinet_port: 3,
+                    kinet_address: "192.168.1.122".to_string(),
+                    kinet_socket_addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(192, 168, 1, 122)), 6038)
+                },
+            ),
+            (
+                "1:5:192.168.1.122",
+                0x015,
+                KinetDestination {
+                    artnet_network: 0, artnet_subnet: 1, artnet_universe: 5, kinet_port: 0,
+                    kinet_address: "192.168.1.122".to_string(),
+                    kinet_socket_addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(192, 168, 1, 122)), 6038)
+                },
+            ),
+            (
+                "7:192.168.4.50:3",
+                0x007,
+                KinetDestination {
+                    artnet_network: 0, artnet_subnet: 0, artnet_universe: 7, kinet_port: 3,
+                    kinet_address: "192.168.4.50".to_string(),
+                    kinet_socket_addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(192, 168, 4, 50)), 6038)
+                },
+            ),
+            (
+                "9:192.168.4.50",
+                0x009,
+                KinetDestination {
+                    artnet_network: 0, artnet_subnet: 0, artnet_universe: 9, kinet_port: 0,
+                    kinet_address: "192.168.4.50".to_string(),
+                    kinet_socket_addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(192, 168, 4, 50)), 6038)
+                },
+            ),
+        );
+
+        let bad_cases = vec!(
+            "10.0.0.266", // not a valid IPv4 address
+            "10.0.0.1:20", // KiNET port number not 0-16
+            "1:0:0:1:10.0.0.2:3", // too many Art-Net values
+            "3:192.168.0.1:vzz", // not a number
+            "ldsf:192.168.0.1", // not a number
+            "1:%:1:192.168.0.1:0", // not a number
+            "askldfk:9:1:192.168.0.1:0", // not a number
+            "3:192.168.0.1:-1", // not a unsigned integer
+            "-5:192.168.0.1", // not a number
+            "1:-2:1:192.168.0.1:0", // not a number
+            "-33:9:1:192.168.0.1:0", // not a number
+            // TODO: validate and test that Art-Net network numbers are not out of range
+        );
+
+        for case in good_cases {
+            let dest = mappings_to_destinations(vec!(case.0.to_string())).unwrap();
+            let key = &(case.1 as u16);
+            assert!(dest.contains_key(key), "destination key not correct for {}, expected {:#x}, got {:#x}", case.0, key, dest.keys().next().unwrap());
+            assert_eq!(dest.len(), 1, "too many destinations created for {}", case.0);
+            assert_eq!(dest[key], case.2, "destination did not match for {}", case.0);
+        }
+
+        for case in bad_cases {
+            mappings_to_destinations(vec!(case.to_string())).expect_err(format!("Expected case to fail, but it didn't: {}", case).as_str());
+        }
+    }
+
 }

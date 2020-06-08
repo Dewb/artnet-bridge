@@ -33,15 +33,17 @@ FLAGS:
 OPTIONS:
     -a <artnet-receive-ip>           The IPv4 network address where Art-Net packets will be received
     -k <kinet-send-ip>               The IPv4 network address that KiNET packets should be sent from
-    -m, --mapping <map-string>...    Map a single Art-Net universe data to a KiNET destination. Map-string should
-                                     consist of an Art-Net source universe and a KiNET destination IPv4 address, with
-                                     optional output universe, all separated by colons. Art-Net source universes can be
-                                     specified with just a universe, or a network, subnet, and universe.
-                                     1:0:15:10.0.0.1:3 would send listen for Art-Net output for network 1, subnet 0,
-                                     universe 15, and send it to the KiNET PDS at 10.0.0.1 for output on
-                                     universe/channel 3. If any network/subnet/universe values are not provided, they
-                                     will be assumed to be 0, so the following are all valid: -m 10.0.0.4 -m
-                                     3:192.168.10.100 -m 1:4:13:10.0.1.4 -m 192.168.0.15:10 -m 1:1:10.0.0.2:2
+    -m, --mapping <map-string>...    Map a single Art-Net universe data to a KiNET destination. Each map-string contains
+                                     an Art-Net source universe and a KiNET destination IPv4 address, with optional
+                                     KiNET output port, all separated by colons. Art-Net source universes can be
+                                     specified as just a single universe value, or as a network, subnet, and universe.
+                                     1:0:15:10.0.0.1:3 would listen for Art-Net output commands destined for network 1,
+                                     subnet 0, universe 15, and resend that output data to the KiNET PDS at 10.0.0.1,
+                                     for output on KiNET port 3. Specifying no port, or 0, will send a KiNET v1 message;
+                                     specifying port 1-16 will send a KiNET v2 PORTOUT message. If any
+                                     network/subnet/universe values are not provided, they will be assumed to be 0, so
+                                     the following are all valid: -m 10.0.0.4 -m 3:192.168.10.100 -m 1:4:13:10.0.1.4 -m
+                                     192.168.0.15:10 -m 1:1:10.0.0.2:2
     -f, --file <config-file>         Path to a file containing configuration options. All command-line options can be
                                      specified in the config file; command-line options will override options in file
                                      where there's a conflict
