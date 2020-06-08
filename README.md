@@ -88,6 +88,6 @@ $ cargo run -- -f examples/config.json
 
 * Support OpenPixelControl as an output protocol alongside KiNET
 * Support sACN as an input protocol alongside Art-Net
-* Support KiNET discovery and readdressing protocols, capture all known KiNET implementation details
+* Support KiNET discovery and readdressing protocols, capture all known KiNET implementation details, spin out a kinet_protocol crate
 * Eventually support building for embedded platforms without heap allocation (e.g. compile with `#![no_std]`).
 * Implement a web-based live configuration panel
