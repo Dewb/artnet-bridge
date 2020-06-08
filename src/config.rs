@@ -328,10 +328,10 @@ mod tests {
             "ldsf:192.168.0.1", // not a number
             "1:%:1:192.168.0.1:0", // not a number
             "askldfk:9:1:192.168.0.1:0", // not a number
-            "3:192.168.0.1:-1", // not a unsigned integer
-            "-5:192.168.0.1", // not a number
-            "1:-2:1:192.168.0.1:0", // not a number
-            "-33:9:1:192.168.0.1:0", // not a number
+            "3:192.168.0.1:-1", // not an unsigned integer
+            "-5:192.168.0.1", // not an unsigned integer
+            "1:-2:1:192.168.0.1:0", // not an unsigned integer
+            "-33:9:1:192.168.0.1:0", // not an unsigned integer
             // TODO: validate and test that Art-Net network numbers are not out of range
         );
 
