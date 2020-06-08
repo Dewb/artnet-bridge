@@ -17,7 +17,7 @@ pub struct KinetDestination {
     pub artnet_universe: u8,
     pub kinet_address: String,
     pub kinet_socket_addr: SocketAddr,
-    pub kinet_universe: u8,
+    pub kinet_port: u8,
 }
 
 pub struct Configuration {
@@ -37,10 +37,11 @@ pub struct UserConfiguration {
     #[structopt(short = "k", display_order = 2)]
     pub kinet_send_ip: Option<String>,
     /// Map a single Art-Net universe data to a KiNET destination. Map-string should consist of an Art-Net source universe and 
-    /// a KiNET destination IPv4 address, with optional output universe, all separated by colons.
+    /// a KiNET destination IPv4 address, with optional KiNET output port, all separated by colons.
     /// Art-Net source universes can be specified with just a universe, or a network, subnet, and universe.
     /// 1:0:15:10.0.0.1:3 would send listen for Art-Net output for network 1, subnet 0, universe 15,
-    /// and send it to the KiNET PDS at 10.0.0.1 for output on universe/channel 3.
+    /// and send it to the KiNET PDS at 10.0.0.1 for output on KiNET port 3.
+    /// Specifying no port, or 0, will send a KiNET v1 message; specifying port 1-16 will send a KiNET v2 PORTOUT message.
     /// If any network/subnet/universe values are not provided, they will be assumed to be 0, so the following are all valid:
     /// -m 10.0.0.4 -m 3:192.168.10.100 -m 1:4:13:10.0.1.4 -m 192.168.0.15:10 -m 1:1:10.0.0.2:2
     #[structopt(short = "m", long = "mapping", value_name = "map-string", display_order = 3)]
@@ -122,13 +123,10 @@ impl UserConfiguration {
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<UserConfiguration, Error> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
-    
         let cfg = serde_json::from_reader(reader)?;
-    
         Ok(cfg)
     }
 }
-
 
 fn mappings_to_destinations(mappings: Vec<String>) -> Result<HashMap<u16, KinetDestination>> {
     let mut destination_map = HashMap::new();
@@ -136,19 +134,24 @@ fn mappings_to_destinations(mappings: Vec<String>) -> Result<HashMap<u16, KinetD
     for dest in mappings {
         let mut tokens: Vec<&str> = dest.split(':').collect();
         let kinet_address: String;
-        let kinet_universe: u8;
+        let kinet_port: u8;
 
         let item = tokens.pop().unwrap_or_default();
         match Ipv4Addr::from_str(item) {
             Ok(_) => {
                 kinet_address = item.to_string();
-                kinet_universe = 0;
+                kinet_port = 0;
             },
             Err(_) => {
-                kinet_universe = match item.parse::<u8>() {
-                    Ok(u) => u,
+                kinet_port = match item.parse::<u8>() {
+                    Ok(port) => {
+                        if port > 16 {
+                            return Err(anyhow!("KiNET destination port too large (must be 0 for KiNET V1, or 1-16 for V2)"));
+                        }
+                        port
+                    }
                     Err(_) => {
-                        return Err(anyhow!("Could not understand {} as a KiNET destination address or universe", item));
+                        return Err(anyhow!("Could not understand {} as a KiNET destination address or port", item));
                     }
                 };
                 let item = tokens.pop().unwrap_or_default();
@@ -222,7 +225,7 @@ fn mappings_to_destinations(mappings: Vec<String>) -> Result<HashMap<u16, KinetD
             artnet_universe,
             kinet_address,
             kinet_socket_addr,
-            kinet_universe,
+            kinet_port: kinet_port,
         });
     }
 

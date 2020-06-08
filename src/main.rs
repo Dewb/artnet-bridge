@@ -99,17 +99,34 @@ fn main() -> Result<(), Error> {
                         debug!("No KiNET destination specified for this Art-Net output");
                     },
                     Some(destination) => {
-                        let mut kinet_output = kinet::Output::default();
-                        kinet_output.data[..length as usize].copy_from_slice(&output.data[..length as usize]);
-                        match kinet_output.serialize() {
-                            Err(e) => { error!("{:?}", e); },
-                            Ok(bytes) => {
-                                debug!("Sending KiNET output packet to {:?} {:?}", destination.kinet_address, destination.kinet_universe);
-                                trace!("{:?}", bytes);
-                                
-                                match kinet_socket.send_to(&bytes, &destination.kinet_socket_addr) {
-                                    Err(e) => { error!("{:?}", e); },
-                                    Ok(_count) => {}
+                        if destination.kinet_port == 0 {
+                            let mut dmx_out_msg = kinet::DmxOut::default();
+                            dmx_out_msg.data[..length as usize].copy_from_slice(&output.data[..length as usize]);
+                            match dmx_out_msg.serialize() {
+                                Err(e) => { error!("{:?}", e); },
+                                Ok(bytes) => {
+                                    debug!("Sending KiNET DmxOut packet to {:?}", destination.kinet_address);
+                                    trace!("{:?}", bytes);
+                                    match kinet_socket.send_to(&bytes, &destination.kinet_socket_addr) {
+                                        Err(e) => { error!("{:?}", e); },
+                                        Ok(_count) => {}
+                                    }
+                                }
+                            }
+                        } else {
+                            let mut port_out_msg = kinet::PortOut::default();
+                            port_out_msg.port = destination.kinet_port;
+                            port_out_msg.data[..length as usize].copy_from_slice(&output.data[..length as usize]);
+                            match port_out_msg.serialize() {
+                                Err(e) => { error!("{:?}", e); },
+                                Ok(bytes) => {
+                                    debug!("Sending KiNET PortOut packet to {:?} port {:?}", destination.kinet_address, destination.kinet_port);
+                                    trace!("{:?}", bytes);
+                                    
+                                    match kinet_socket.send_to(&bytes, &destination.kinet_socket_addr) {
+                                        Err(e) => { error!("{:?}", e); },
+                                        Ok(_count) => {}
+                                    }
                                 }
                             }
                         }
