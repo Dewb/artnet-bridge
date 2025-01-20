@@ -81,28 +81,26 @@ fn main() -> Result<(), Error> {
             ArtCommand::PollReply(_reply) => {
             },
             ArtCommand::Output(output) => {
-                // artnet_protocol 0.2.0 seems to parse the length field with the wrong endianness, reverse it
-                let length = match output.length.swap_bytes() {
-                    0..=512 => output.length.swap_bytes(),
-                    _ => 512
-                };
 
-                let artnet_universe = (output.subnet & 0x0F) as u8;
-                let artnet_subnet   = ((output.subnet & 0xF0) >> 4) as u8;
-                let artnet_network  = ((output.subnet & 0x7F00) >> 8) as u8;
+                let artnet_port_address = u16::from(output.port_address);
+
+                let artnet_universe = (artnet_port_address & 0x0F) as u8;
+                let artnet_subnet   = ((artnet_port_address & 0xF0) >> 4) as u8;
+                let artnet_network  = ((artnet_port_address & 0x7F00) >> 8) as u8;
 
                 debug!("Received Art-Net output command for net/subnet/universe {:?}:{:?}:{:?} with length {:?}", 
                     artnet_network, artnet_subnet, artnet_universe, length);
                 trace!("{:?}", output);
 
-                match cfg.kinet_destinations.get(&output.subnet) {
+                match cfg.kinet_destinations.get(&artnet_port_address) {
                     None => {
                         debug!("No KiNET destination specified for this Art-Net output");
                     },
                     Some(destination) => {
+                        let payload : &Vec<u8> = output.data.as_ref();
                         if destination.kinet_port == 0 {
                             let mut dmx_out_msg = kinet::DmxOut::default();
-                            dmx_out_msg.data[..length as usize].copy_from_slice(&output.data[..length as usize]);
+                            dmx_out_msg.data[..length as usize].copy_from_slice(&payload[..length as usize]);
                             match bincode::serialize(&dmx_out_msg) {
                                 Err(e) => { error!("{:?}", e); },
                                 Ok(bytes) => {
@@ -117,7 +115,7 @@ fn main() -> Result<(), Error> {
                         } else {
                             let mut port_out_msg = kinet::PortOut::default();
                             port_out_msg.port = destination.kinet_port;
-                            port_out_msg.data[..length as usize].copy_from_slice(&output.data[..length as usize]);
+                            port_out_msg.data[..length as usize].copy_from_slice(&payload[..length as usize]);
                             match bincode::serialize(&port_out_msg) {
                                 Err(e) => { error!("{:?}", e); },
                                 Ok(bytes) => {
