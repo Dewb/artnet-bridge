@@ -4,7 +4,7 @@ use anyhow::Error;
 
 
 pub fn send_artnet_command(command: ArtCommand, socket: &UdpSocket, dest: &SocketAddr) -> Result<(), Error> {
-    let bytes = command.into_buffer()?;
+    let bytes = command.write_to_buffer()?;
     socket.send_to(&bytes, dest)?;
     Ok(())
 }
