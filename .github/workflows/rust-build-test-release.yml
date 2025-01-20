@@ -56,4 +56,5 @@ jobs:
         with:
           executable-name: artnet-bridge
           extra-files: "README.md\nLICENSE.md"
+          changes-file: ""
           target: ${{ matrix.platform.target }}
