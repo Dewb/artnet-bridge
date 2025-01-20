@@ -49,5 +49,5 @@ jobs:
         uses: houseabsolute/actions-rust-release@v0
         with:
           executable-name: artnet-bridge
-          extra-files: "*.md"
+          extra-files: "README.md\nLICENSE.md"
           target: ${{ matrix.platform.target }}
