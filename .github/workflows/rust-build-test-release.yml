@@ -1,6 +1,7 @@
 name: Build/Test/Release
 on: 
   workflow_dispatch:
+  create:
   push:
     branches: [ main ]
   pull_request:
