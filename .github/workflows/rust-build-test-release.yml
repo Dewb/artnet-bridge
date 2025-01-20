@@ -1,5 +1,10 @@
 name: Build/Test/Release
-on: [workflow_dispatch]
+on: 
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 env:
   CRATE_NAME: artnet-bridge
   GITHUB_TOKEN: ${{ github.token }}
@@ -45,7 +50,7 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           args:
             "--locked --release"
-      - name: Publish artifacts and release
+      - name: Publish artifacts and release (if tagged)
         uses: houseabsolute/actions-rust-release@v0
         with:
           executable-name: artnet-bridge
