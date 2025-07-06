@@ -2,7 +2,7 @@
 name = "artnet-bridge"
 version = "0.1.0"
 authors = ["Michael Dewberry <michael.dewberry@gmail>"]
-edition = "2018"
+edition = "2021"
 description = "ArtNet-Kinet Bridge"
 license = "GPLv3"
 documentation = "https://docs.rs/artnet_bridge"
@@ -12,7 +12,7 @@ repository = "https://github.com/dewb/artnet_bridge"
 structopt = "0.3.13"
 log = "0.4"
 pretty_env_logger = "0.4.0"
-artnet_protocol = "0.2.0"
+artnet_protocol = "0.4.3"
 bincode = "1.2.1"
 serde =  { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
